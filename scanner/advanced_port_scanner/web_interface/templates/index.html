@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+        <p class="lead">Advanced Network Port Scanner with comprehensive scanning capabilities</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Quick Scan</h5>
+                        <p class="card-text">Start a new port scan</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-search fa-2x"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('scan') }}" class="btn btn-light">Start Scanning</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Scan History</h5>
+                        <p class="card-text">View previous scans</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-history fa-2x"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('history') }}" class="btn btn-light">View History</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Settings</h5>
+                        <p class="card-text">Configure scanner</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-cog fa-2x"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('settings') }}" class="btn btn-light">Configure</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h3>Features</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <ul class="list-group">
+                    <li class="list-group-item"><i class="fas fa-check text-success"></i> TCP SYN Scanning</li>
+                    <li class="list-group-item"><i class="fas fa-check text-success"></i> UDP Scanning</li>
+                    <li class="list-group-item"><i class="fas fa-check text-success"></i> Service Detection</li>
+                    <li class="list-group-item"><i class="fas fa-check text-success"></i> OS Fingerprinting</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul class="list-group">
+                    <li class="list-group-item"><i class="fas fa-check text-success"></i> Banner Grabbing</li>
+                    <li class="list-group-item"><i class="fas fa-check text-success"></i> Multi-threading</li>
+                    <li class="list-group-item"><i class="fas fa-check text-success"></i> Result Export</li>
+                    <li class="list-group-item"><i class="fas fa-check text-success"></i> Scan Scheduling</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

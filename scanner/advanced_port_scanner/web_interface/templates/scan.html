@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-search"></i> New Scan</h1>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Scan Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form id="scanForm">
+                    <div class="mb-3">
+                        <label for="targets" class="form-label">Targets</label>
+                        <input type="text" class="form-control" id="targets" 
+                               placeholder="192.168.1.1, 192.168.1.0/24, example.com" required>
+                        <small class="form-text text-muted">
+                            Enter IP addresses, CIDR ranges, or hostnames (comma-separated)
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="ports" class="form-label">Ports</label>
+                        <input type="text" class="form-control" id="ports" 
+                               value="1-1000" required>
+                        <small class="form-text text-muted">
+                            e.g., 80, 1-1000, 80,443,8080
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="scanType" class="form-label">Scan Type</label>
+                        <select class="form-control" id="scanType">
+                            <option value="tcp_connect">TCP Connect</option>
+                            <option value="tcp_syn">TCP SYN</option>
+                            <option value="udp">UDP</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Start Scan
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Quick Presets</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-outline-primary btn-sm mb-2 w-100" onclick="setPreset('common')">
+                    Common Ports (1-1024)
+                </button>
+                <button class="btn btn-outline-primary btn-sm mb-2 w-100" onclick="setPreset('web')">
+                    Web Ports (80,443,8080,8443)
+                </button>
+                <button class="btn btn-outline-primary btn-sm mb-2 w-100" onclick="setPreset('ssh')">
+                    SSH/Remote (22,23,3389,5900)
+                </button>
+                <button class="btn btn-outline-primary btn-sm mb-2 w-100" onclick="setPreset('all')">
+                    All Ports (1-65535)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4" id="resultsSection" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Scan Results</h5>
+            </div>
+            <div class="card-body">
+                <div id="scanStatus"></div>
+                <div id="scanResults"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setPreset(type) {
+    const portsInput = document.getElementById('ports');
+    switch(type) {
+        case 'common':
+            portsInput.value = '1-1024';
+            break;
+        case 'web':
+            portsInput.value = '80,443,8080,8443,8000,3000';
+            break;
+        case 'ssh':
+            portsInput.value = '22,23,3389,5900,5901';
+            break;
+        case 'all':
+            portsInput.value = '1-65535';
+            break;
+    }
+}
+
+document.getElementById('scanForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const targets = document.getElementById('targets').value;
+    const ports = document.getElementById('ports').value;
+    const scanType = document.getElementById('scanType').value;
+    
+    if (!targets) {
+        alert('Please enter target(s)');
+        return;
+    }
+    
+    // Show results section
+    document.getElementById('resultsSection').style.display = 'block';
+    document.getElementById('scanStatus').innerHTML = '<div class="alert alert-info">Starting scan...</div>';
+    
+    // Start scan
+    fetch('/scan', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            targets: targets,
+            ports: ports,
+            scan_type: scanType
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.scan_id) {
+            pollScanStatus(data.scan_id);
+        }
+    })
+    .catch(error => {
+        document.getElementById('scanStatus').innerHTML = '<div class="alert alert-danger">Error starting scan: ' + error + '</div>';
+    });
+});
+
+function pollScanStatus(scanId) {
+    const interval = setInterval(() => {
+        fetch('/scan/' + scanId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'completed') {
+                clearInterval(interval);
+                displayResults(data.results);
+            } else if (data.status === 'error') {
+                clearInterval(interval);
+                document.getElementById('scanStatus').innerHTML = '<div class="alert alert-danger">Scan error: ' + data.error + '</div>';
+            } else {
+                document.getElementById('scanStatus').innerHTML = '<div class="alert alert-info">Scan in progress... <div class="spinner-border spinner-border-sm"></div></div>';
+            }
+        });
+    }, 2000);
+}
+
+function displayResults(results) {
+    document.getElementById('scanStatus').innerHTML = '<div class="alert alert-success">Scan completed!</div>';
+    
+    let html = '<table class="table table-striped"><thead><tr><th>Target</th><th>Port</th><th>State</th><th>Service</th><th>Version</th></tr></thead><tbody>';
+    
+    for (const [target, data] of Object.entries(results)) {
+        for (const [port, info] of Object.entries(data.ports)) {
+            html += `<tr>
+                <td>${target}</td>
+                <td>${port}</td>
+                <td><span class="badge bg-success">${info.state}</span></td>
+                <td>${info.service}</td>
+                <td>${info.version}</td>
+            </tr>`;
+        }
+    }
+    
+    html += '</tbody></table>';
+    document.getElementById('scanResults').innerHTML = html;
+}
+</script>
+{% endblock %}
