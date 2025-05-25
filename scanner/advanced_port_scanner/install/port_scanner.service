@@ -1,0 +1,15 @@
+[Unit]
+Description=Advanced Port Scanner Web Interface
+After=network.target
+
+[Service]
+Type=simple
+User=A4004
+WorkingDirectory=/home/mostasim/advanced_port_scanner/scanner/advanced_port_scanner
+Environment=PATH=/home/mostasim/advanced_port_scanner/scanner/advanced_port_scanner/venv/bin
+ExecStart=/home/mostasim/advanced_port_scanner/scanner/advanced_port_scanner/venv/bin/python web_interface/app.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
